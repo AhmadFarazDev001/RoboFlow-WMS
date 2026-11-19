@@ -1,0 +1,89 @@
+# Compiled Object files
+*.slo
+*.lo
+*.o
+*.obj
+
+# Precompiled Headers
+*.gch
+*.pch
+
+# Compiled Dynamic libraries
+*.so
+*.dylib
+*.dll
+
+# Fortran module files
+*.mod
+*.smod
+
+# Compiled Static libraries
+*.lai
+*.la
+*.a
+*.lib
+
+# Executables and Linux Extensionless Binaries
+*.exe
+*.out
+*.app
+a.out
+main
+test
+
+# Debug symbols and core dumps
+*.dSYM/
+*.su
+*.idb
+*.pdb
+*.ilk
+*.exp
+core
+core.*
+vgcore.*
+
+# Build directories (CMake / Make / Ninja)
+build/
+Build/
+bin/
+obj/
+out/
+Debug/
+Release/
+x64/
+x86/
+CMakeFiles/
+CMakeCache.txt
+cmake_install.cmake
+Makefile
+*.cmake
+!CMakeLists.txt
+
+# Visual Studio / MSVC junk
+.vs/
+*.user
+*.userosscache
+*.sln.docstates
+*.vcxproj.user
+*.vc.db
+*.opendb
+*.ipch/
+*.tlog/
+*.lastbuildstate
+
+# VS Code (uncomment .vscode/ below if you don't want to share tasks.json/settings.json)
+# .vscode/
+.vscode/*.log
+.vscode/ipch/
+
+# CLion / JetBrains IDEs
+.idea/
+cmake-build-*/
+
+# OS-specific junk files
+.DS_Store
+Thumbs.db
+Desktop.ini
+*~
+*.swp
+*.swo
