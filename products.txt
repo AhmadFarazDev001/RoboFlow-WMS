@@ -1,0 +1,13 @@
+12
+P101 Wireless_Mouse 0.5 10
+P102 Mechanical_Keyboard 1.5 8
+P103 USB_C_Hub 0.4 15
+P104 Laptop_Stand 2.5 6
+P105 Gaming_Headset 1.0 10
+P106 Monitor_Arm 4.5 5
+P107 Desktop_Printer 8.0 4
+P108 Office_Chair_Base 12.0 3
+P109 Laser_Projector 6.5 5
+P110 Server_UPS_Battery 15.0 3
+P111 External_SSD 0.3 12
+P112 Webcam_HD 0.6 10
