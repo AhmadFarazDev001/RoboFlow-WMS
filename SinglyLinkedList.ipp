@@ -1,5 +1,5 @@
 #pragma once
-
+#include "SinglyLinkedList.h"
 template <typename T>
 SinglyLinkedList<T>::SinglyLinkedList()
 {
