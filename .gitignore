@@ -87,3 +87,44 @@ Desktop.ini
 *~
 *.swp
 *.swo
+# Xcode build & derived data
+build/
+DerivedData/
+*.ipa
+*.dSYM.zip
+*.dSYM
+
+# Xcode user-specific & temporary files
+*.xcuserdatad/
+*.xcscmblueprint
+*.xccheckout
+*.moved-aside
+*.hmap
+*.sb-*
+*.pbxuser
+*.mode1v3
+*.mode2v3
+*.perspectivev3
+
+# Swift Package Manager (if ever used)
+.build/
+Packages/
+Package.pins
+Package.resolved
+
+# Compiled C/C++ binaries & object files
+*.o
+*.obj
+*.out
+*.exe
+*.dll
+*.so
+*.dylib
+*.a
+*.lib
+
+# macOS clutter
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
