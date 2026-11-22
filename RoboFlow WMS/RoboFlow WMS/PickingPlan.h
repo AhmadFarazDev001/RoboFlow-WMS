@@ -128,4 +128,87 @@ bool allocateRacksForProduct(
     AllocationList& outList
 );
 
+// ============================================================================
+// STEP 2: NEAREST-REACHABLE-RACK VISIT ORDERING & MULTI-TRIP SPLITTING
+// ============================================================================
+
+// Represents a single ordered stop along a picking route or trip
+struct OrderedPickStop {
+    std::string prodID;
+    std::string rackID;
+    std::string locationID;
+    int pickQty;
+    int legDistance;          // Shortest distance from previous location to this stop
+    bool visited;
+    OrderedPickStop* next;
+
+    OrderedPickStop(const std::string& pID, const std::string& rID, const std::string& lID, int qty, int dist)
+        : prodID(pID), rackID(rID), locationID(lID), pickQty(qty), legDistance(dist), visited(false), next(nullptr) {}
+};
+
+// Custom linked list of ordered picking stops
+struct OrderedStopList {
+    OrderedPickStop* head;
+    OrderedPickStop* tail;
+    int stopCount;
+    int totalUnits;
+
+    OrderedStopList()
+        : head(nullptr), tail(nullptr), stopCount(0), totalUnits(0) {}
+};
+
+// Represents one trip from the current/packing location across one or more racks
+struct PickingTripNode {
+    int tripNumber;           // 1-based trip index
+    std::string startLocationID;
+    std::string endLocationID;    // e.g., packing/drop-off station ID
+    OrderedPickStop* stopsHead;
+    OrderedPickStop* stopsTail;
+    int tripUnits;
+    int totalTripDistance;
+    PickingTripNode* next;
+
+    PickingTripNode(int num, const std::string& startLoc, const std::string& endLoc)
+        : tripNumber(num), startLocationID(startLoc), endLocationID(endLoc),
+          stopsHead(nullptr), stopsTail(nullptr), tripUnits(0), totalTripDistance(0), next(nullptr) {}
+};
+
+// Custom linked list of split trips for a picking plan
+class PickingTripList {
+public:
+    PickingTripNode* head;
+    PickingTripNode* tail;
+    int tripCount;
+    int totalPlannedUnits;
+
+    PickingTripList()
+        : head(nullptr), tail(nullptr), tripCount(0), totalPlannedUnits(0) {}
+
+    ~PickingTripList();
+};
+
+// Step 2 memory-cleanup helpers
+void appendOrderedStop(OrderedStopList& list, const std::string& prodID, const std::string& rID, const std::string& lID, int qty, int dist);
+void clearOrderedStopList(OrderedStopList& list);
+void appendStopToTrip(PickingTripNode* trip, const std::string& prodID, const std::string& rID, const std::string& lID, int qty, int legDist);
+void appendTripNode(PickingTripList& tripList, const std::string& startLoc, const std::string& endLoc);
+void clearPickingTripList(PickingTripList& tripList);
+
+// Orders allocated rack stops by nearest reachable rack from startLocationID
+bool orderStopsByNearestReachable(
+    const AllocationList& allocations,
+    const std::string& prodID,
+    const std::string& startLocationID,
+    const LocalWarehouseGraph& graph,
+    OrderedStopList& orderedOut
+);
+
+// Splits ordered stops into multi-trip routes based on robot carry capacity
+bool splitStopsIntoTrips(
+    const OrderedStopList& orderedStops,
+    int robotCapacity,
+    const std::string& packingStationID,
+    const LocalWarehouseGraph& graph,
+    PickingTripList& tripsOut
+);
 #endif // PICKINGPLAN_H
