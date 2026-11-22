@@ -1,0 +1,16 @@
+15
+L01 PACKING Packing_Station_1
+L02 PACKING Packing_Station_2
+L03 CHARGING Charging_Bay_North
+L04 PACKING Packing_Station_3
+L05 RACK Aisle_A_North
+L06 RACK Aisle_A_South
+L07 RACK Aisle_B_North
+L08 RACK Aisle_B_South
+L09 RACK Aisle_C_North
+L10 RACK Aisle_C_South
+L11 RACK Aisle_D_North
+L12 RACK Aisle_D_South
+L13 RACK Heavy_Storage_1
+L14 RACK Heavy_Storage_2
+L15 CHARGING Charging_Bay_South

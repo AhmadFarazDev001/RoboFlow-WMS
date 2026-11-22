@@ -1,0 +1,7 @@
+6
+RB01 Picker L01 92.0 12.0 Available
+RB02 Picker L05 16.5 15.0 Available
+RB03 Carrier L02 84.0 25.0 Available
+RB04 Carrier L08 14.0 30.0 Available
+RB05 HeavyDuty L04 95.0 50.0 Available
+RB06 HeavyDuty L13 18.0 60.0 Available
