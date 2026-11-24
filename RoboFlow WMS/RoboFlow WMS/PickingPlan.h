@@ -112,6 +112,7 @@ public:
         head = nullptr;
         tail = nullptr;
     }
+    ~CandidateList();
 };
 // Memory cleanup helpers
 void appendAllocationNode(AllocationList& list, const std::string& rID, const std::string& lID, int qty, int dist);
@@ -155,6 +156,8 @@ struct OrderedStopList {
 
     OrderedStopList()
         : head(nullptr), tail(nullptr), stopCount(0), totalUnits(0) {}
+
+    ~OrderedStopList();
 };
 
 // Represents one trip from the current/packing location across one or more racks
@@ -190,9 +193,12 @@ public:
 // Step 2 memory-cleanup helpers
 void appendOrderedStop(OrderedStopList& list, const std::string& prodID, const std::string& rID, const std::string& lID, int qty, int dist);
 void clearOrderedStopList(OrderedStopList& list);
+
 void appendStopToTrip(PickingTripNode* trip, const std::string& prodID, const std::string& rID, const std::string& lID, int qty, int legDist);
 void appendTripNode(PickingTripList& tripList, const std::string& startLoc, const std::string& endLoc);
 void clearPickingTripList(PickingTripList& tripList);
+
+bool removeAllocationByRack(AllocationList& list, const std::string& targetRackID);
 
 // Orders allocated rack stops by nearest reachable rack from startLocationID
 bool orderStopsByNearestReachable(
