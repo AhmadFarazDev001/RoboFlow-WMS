@@ -8,6 +8,7 @@ struct HeapNode
     int index;
 };
 
+// dijkstra k liye min heap
 class MinHeap
 {
 private:
