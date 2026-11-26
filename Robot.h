@@ -1,5 +1,6 @@
 #pragma once
 #include "library.h"
+
 class Robot
 {
 protected:
@@ -8,7 +9,7 @@ protected:
     std::string currentLocationID;
     double batteryLevel;
     double maxCapacity;
-    std::string status; //can use fr available, assigned, waiting for Charging, Charging, unavailable
+    std::string status; //can used fr Available, Assigned, Waiting for Charging, Charging, Unavailable
     std::string assignedTaskID;
 
 public:
@@ -19,7 +20,7 @@ public:
     virtual double getBatteryRate() const = 0;
     virtual bool isEligibleForOrder(double totalOrderWeight, double maxUnitWeight) const = 0;
 
-    // Formula used  distance * rate * (1 + 0.5 * carriedWeight / maxCapacity)
+    // battery formula= distance * rate * (1 + 0.5 * carriedWeight / maxCapacity)
     double calculateLegBattery(int distance, double carriedWeight) const;
 
     std::string getID() const { return robotID; }
@@ -31,7 +32,7 @@ public:
     std::string getAssignedTask() const { return assignedTaskID; }
 
     void setLocation(const std::string &loc) { currentLocationID = loc; }
-    void setBattery(double bat) { batteryLevel = (bat < 0.0) ? 0.0 : (bat > 100.0 ? 100.0 : bat); }
+    void setBattery(double bat);
     void setStatus(const std::string &st) { status = st; }
     void setAssignedTask(const std::string &taskID) { assignedTaskID = taskID; }
 };
