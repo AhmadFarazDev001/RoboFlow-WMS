@@ -1,14 +1,14 @@
 #pragma once
 #include "MinHeap.h"
 
-inline bool MinHeap::isBetter(const HeapNode &a, const HeapNode &b) const
+bool MinHeap::isBetter(const HeapNode &a, const HeapNode &b) const
 {
     if (a.weight != b.weight)
         return a.weight < b.weight;
     return a.hops < b.hops;
 }
 
-inline void MinHeap::resize()
+void MinHeap::resize()
 {
     cap *= 2;
     HeapNode *newArr = new HeapNode[cap];
@@ -19,7 +19,7 @@ inline void MinHeap::resize()
     arr = newArr;
 }
 
-inline void MinHeap::heapifyUp(int i)
+void MinHeap::heapifyUp(int i)
 {
     while (i > 0)
     {
@@ -38,7 +38,7 @@ inline void MinHeap::heapifyUp(int i)
     }
 }
 
-inline void MinHeap::heapifyDown(int i)
+void MinHeap::heapifyDown(int i)
 {
     while (true)
     {
@@ -65,19 +65,19 @@ inline void MinHeap::heapifyDown(int i)
     }
 }
 
-inline MinHeap::MinHeap(int initialCap)
+MinHeap::MinHeap(int initialCap)
 {
     cap = (initialCap > 0) ? initialCap : 16;
     count = 0;
     arr = new HeapNode[cap];
 }
 
-inline MinHeap::~MinHeap()
+MinHeap::~MinHeap()
 {
     delete[] arr;
 }
 
-inline void MinHeap::push(int weight, int hops, int index)
+void MinHeap::push(int weight, int hops, int index)
 {
     if (count == cap)
         resize();
@@ -89,7 +89,7 @@ inline void MinHeap::push(int weight, int hops, int index)
     count++;
 }
 
-inline HeapNode MinHeap::pop()
+HeapNode MinHeap::pop()
 {
     HeapNode top = arr[0];
     arr[0] = arr[count - 1];
