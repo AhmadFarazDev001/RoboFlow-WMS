@@ -9,7 +9,7 @@ struct IntQueueNode
     IntQueueNode(int val) : data(val), next(nullptr) {}
 };
 
-// FIFO queue of vertex indices iused for BFS
+// BFS k liye simple FIFO queue
 class IntQueue
 {
 private:
@@ -33,7 +33,7 @@ struct WaitNode
     WaitNode(const std::string &id) : robotID(id), next(nullptr) {}
 };
 
-// Manages active charging slots & the fiFo waiting queue for a station
+// charging slots aur waiting queue handle krny k liye
 class SlotQueue
 {
 private:
@@ -49,7 +49,6 @@ public:
     SlotQueue(const SlotQueue &) = delete;
     SlotQueue &operator=(const SlotQueue &) = delete;
 
-    // Active slot operations
     int getTotalSlots() const { return totalSlots; }
     int findFreeSlot() const;
     int findRobotInSlots(const std::string &robotID) const;
@@ -57,7 +56,6 @@ public:
     void clearSlot(int slotIndex);
     std::string getSlotOccupant(int slotIndex) const;
 
-    // Waiting queue operations
     bool isQueueEmpty() const { return waitFront == nullptr; }
     void enqueueRobot(const std::string &robotID);
     std::string dequeueRobot();
