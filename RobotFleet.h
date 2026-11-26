@@ -1,5 +1,6 @@
 #pragma once
 #include "library.h"
+
 struct RobotNode
 {
     Robot *data;
@@ -13,6 +14,7 @@ class RobotFleet
 private:
     RobotNode *head;
     bool isNumberLine(const std::string &line) const;
+    std::string trimText(const std::string &text) const;
 
 public:
     RobotFleet();
@@ -22,7 +24,8 @@ public:
     RobotFleet &operator=(const RobotFleet &) = delete;
 
     bool loadRobots(const std::string &filename, const WarehouseGraph *graph = nullptr);
-    bool registerRobot(const std::string &id, const std::string &type, const std::string &locID, double battery, double maxCap, const WarehouseGraph *graph = nullptr,
+    bool registerRobot(const std::string &id, const std::string &type, const std::string &locID,
+                       double battery, double maxCap, const WarehouseGraph *graph = nullptr,
                        const std::string &status = "Available");
 
     Robot *searchRobot(const std::string &robotID) const;
