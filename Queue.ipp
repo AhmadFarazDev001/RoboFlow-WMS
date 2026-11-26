@@ -1,17 +1,18 @@
 #pragma once
 #include "Queue.h"
-inline IntQueue::IntQueue() : front(nullptr), rear(nullptr) {}
 
-inline IntQueue::~IntQueue()
+IntQueue::IntQueue() : front(nullptr), rear(nullptr) {}
+
+IntQueue::~IntQueue()
 {
     while (!isEmpty())
         dequeue();
 }
 
-inline void IntQueue::enqueue(int val)
+void IntQueue::enqueue(int val)
 {
     IntQueueNode *node = new IntQueueNode(val);
-    if (!rear)
+    if (rear == nullptr)
     {
         front = rear = node;
         return;
@@ -20,7 +21,7 @@ inline void IntQueue::enqueue(int val)
     rear = node;
 }
 
-inline int IntQueue::dequeue()
+int IntQueue::dequeue()
 {
     if (isEmpty())
         return -1;
@@ -28,28 +29,31 @@ inline int IntQueue::dequeue()
     IntQueueNode *temp = front;
     int val = temp->data;
     front = front->next;
-    if (!front)
+    if (front == nullptr)
         rear = nullptr;
 
     delete temp;
     return val;
 }
 
-//~~~ SlotQueue ~~~
+// SlotQueue functions
 
-inline SlotQueue::SlotQueue(int slots) : totalSlots(slots), waitFront(nullptr), waitRear(nullptr)
+SlotQueue::SlotQueue(int slots) : totalSlots(slots), waitFront(nullptr), waitRear(nullptr)
 {
-    activeSlots = (totalSlots > 0) ? new std::string[totalSlots] : nullptr;
+    if (totalSlots > 0)
+        activeSlots = new std::string[totalSlots];
+    else
+        activeSlots = nullptr;
 }
 
-inline SlotQueue::~SlotQueue()
+SlotQueue::~SlotQueue()
 {
     delete[] activeSlots;
     while (!isQueueEmpty())
         dequeueRobot();
 }
 
-inline int SlotQueue::findFreeSlot() const
+int SlotQueue::findFreeSlot() const
 {
     for (int i = 0; i < totalSlots; i++)
     {
@@ -59,7 +63,7 @@ inline int SlotQueue::findFreeSlot() const
     return -1;
 }
 
-inline int SlotQueue::findRobotInSlots(const std::string &robotID) const
+int SlotQueue::findRobotInSlots(const std::string &robotID) const
 {
     for (int i = 0; i < totalSlots; i++)
     {
@@ -69,29 +73,29 @@ inline int SlotQueue::findRobotInSlots(const std::string &robotID) const
     return -1;
 }
 
-inline void SlotQueue::assignSlot(int slotIndex, const std::string &robotID)
+void SlotQueue::assignSlot(int slotIndex, const std::string &robotID)
 {
     if (slotIndex >= 0 && slotIndex < totalSlots)
         activeSlots[slotIndex] = robotID;
 }
 
-inline void SlotQueue::clearSlot(int slotIndex)
+void SlotQueue::clearSlot(int slotIndex)
 {
     if (slotIndex >= 0 && slotIndex < totalSlots)
         activeSlots[slotIndex] = "";
 }
 
-inline std::string SlotQueue::getSlotOccupant(int slotIndex) const
+std::string SlotQueue::getSlotOccupant(int slotIndex) const
 {
     if (slotIndex >= 0 && slotIndex < totalSlots)
         return activeSlots[slotIndex];
     return "";
 }
 
-inline void SlotQueue::enqueueRobot(const std::string &robotID)
+void SlotQueue::enqueueRobot(const std::string &robotID)
 {
     WaitNode *node = new WaitNode(robotID);
-    if (!waitRear)
+    if (waitRear == nullptr)
     {
         waitFront = waitRear = node;
         return;
@@ -100,7 +104,7 @@ inline void SlotQueue::enqueueRobot(const std::string &robotID)
     waitRear = node;
 }
 
-inline std::string SlotQueue::dequeueRobot()
+std::string SlotQueue::dequeueRobot()
 {
     if (isQueueEmpty())
         return "";
@@ -108,14 +112,14 @@ inline std::string SlotQueue::dequeueRobot()
     WaitNode *temp = waitFront;
     std::string id = temp->robotID;
     waitFront = waitFront->next;
-    if (!waitFront)
+    if (waitFront == nullptr)
         waitRear = nullptr;
 
     delete temp;
     return id;
 }
 
-inline bool SlotQueue::removeFromQueue(const std::string &robotID)
+bool SlotQueue::removeFromQueue(const std::string &robotID)
 {
     if (isQueueEmpty())
         return false;
@@ -143,7 +147,7 @@ inline bool SlotQueue::removeFromQueue(const std::string &robotID)
     return false;
 }
 
-inline void SlotQueue::displayQueue() const
+void SlotQueue::displayQueue() const
 {
     if (isQueueEmpty())
     {
