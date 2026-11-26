@@ -11,8 +11,8 @@
 #include "Library.h"
 
 // ============================================================================
-// LOCAL STUB STRUCTURES FOR STEP 1 (Your own simple structures for now;
-// swap/align with Ahmed's & Hamza's implementations during final merge)
+// LOCAL STUB STRUCTURES FOR STEP 1
+// (Lightweight interfaces; align with Ahmed's & Hamza's headers during merge)
 // ============================================================================
 
 struct RackEntry {
@@ -44,6 +44,7 @@ struct LocalInventoryTree {
 
     LocalInventoryTree() : root(nullptr) {}
 
+    // Standard BST/AVL lookup by ProductID
     ProductNode* searchProduct(const std::string& prodID) const {
         ProductNode* cur = root;
         while (cur != nullptr) {
@@ -52,6 +53,13 @@ struct LocalInventoryTree {
         }
         return nullptr;
     }
+
+    //inventory hooks for module 5 & 6
+    virtual bool reserveStock(const std::string& prodID, const std::string& rackID, const std::string& orderID, int qty) { return false; }
+    virtual void releaseOrderReservations(const std::string& orderID) {}
+    virtual void releaseSingleStopReservation(const std::string& prodID, const std::string& rackID, const std::string& orderID, int qty) {}
+    virtual bool commitPickedStock(const std::string& prodID, const std::string& rackID, const std::string& orderID, int qty) { return false; }
+    virtual ~LocalInventoryTree() {}
 };
 
 struct LocalWarehouseGraph {
@@ -62,11 +70,15 @@ struct LocalWarehouseGraph {
     // or -1 if unreachable / invalid location
     virtual int getShortestDistance(const std::string& startLoc, const std::string& endLoc) const = 0;
 
+    //graph hooks for packing station & open pathway validation
+    virtual std::string getNearestPackingStation(const std::string& fromLoc, int& outDist) const { outDist = -1; return ""; }
+    virtual bool isRouteStillOpen(const std::string& startLoc, const std::string& endLoc) const { return true; }
+
     virtual ~LocalWarehouseGraph() {}
 };
 
 // ============================================================================
-// STEP 1 DATA STRUCTURES & FUNCTION DECLARATIONS
+// STEP 1: DETERMINISTIC RACK ALLOCATION DATA STRUCTURES & DECLARATIONS
 // ============================================================================
 
 struct AllocationNode {
@@ -104,17 +116,17 @@ struct CandidateRack {
     CandidateRack(const std::string& rID, const std::string& lID, int avail, int dist)
         : rackID(rID), locationID(lID), availableQty(avail), distance(dist), used(false), next(nullptr) {}
 };
-class CandidateList{
+
+class CandidateList {
 public:
-    CandidateRack * head;
-    CandidateRack * tail;
-    CandidateList(){
-        head = nullptr;
-        tail = nullptr;
-    }
+    CandidateRack* head;
+    CandidateRack* tail;
+
+    CandidateList() : head(nullptr), tail(nullptr) {}
     ~CandidateList();
 };
-// Memory cleanup helpers
+
+// Step 1 linked-list & memory cleanup helpers
 void appendAllocationNode(AllocationList& list, const std::string& rID, const std::string& lID, int qty, int dist);
 void clearAllocationList(AllocationList& list);
 void clearCandidateList(CandidateRack*& head);
@@ -162,9 +174,9 @@ struct OrderedStopList {
 
 // Represents one trip from the current/packing location across one or more racks
 struct PickingTripNode {
-    int tripNumber;           // 1-based trip index
+    int tripNumber;               // 1-based trip index
     std::string startLocationID;
-    std::string endLocationID;    // e.g., packing/drop-off station ID
+    std::string endLocationID;    // Packing/drop-off station ID
     OrderedPickStop* stopsHead;
     OrderedPickStop* stopsTail;
     int tripUnits;
@@ -190,7 +202,7 @@ public:
     ~PickingTripList();
 };
 
-// Step 2 memory-cleanup helpers
+// Step 2 linked-list & memory cleanup helpers
 void appendOrderedStop(OrderedStopList& list, const std::string& prodID, const std::string& rID, const std::string& lID, int qty, int dist);
 void clearOrderedStopList(OrderedStopList& list);
 
@@ -217,4 +229,124 @@ bool splitStopsIntoTrips(
     const LocalWarehouseGraph& graph,
     PickingTripList& tripsOut
 );
+
+// ============================================================================
+// STEP 3: MODULE 5 - ROBOT SELECTION & PICKING PLAN GENERATION
+// ============================================================================
+
+struct OrderItemNode {
+    std::string prodID;
+    int requiredQty;
+    int deliveredQty;
+    OrderItemNode* next;
+
+    OrderItemNode(const std::string& pID, int req, int del = 0)
+        : prodID(pID), requiredQty(req), deliveredQty(del), next(nullptr) {}
+};
+
+struct OrderNode {
+    std::string orderID;
+    std::string customerID;
+    std::string status;
+    std::string assignedRobotID;
+    OrderItemNode* itemsHead;
+    OrderNode* next;
+
+    OrderNode(const std::string& oID, const std::string& cID)
+        : orderID(oID), customerID(cID), status("Pending"), assignedRobotID(""),
+          itemsHead(nullptr), next(nullptr) {}
+};
+
+struct LocalOrderQueue {
+    virtual OrderNode* peekFront() const = 0;
+    virtual OrderNode* getNextPending(OrderNode* current) const = 0;
+    virtual void removeOrder(const std::string& orderID) = 0;
+    virtual void pushFront(OrderNode* order) = 0;
+    virtual ~LocalOrderQueue() {}
+};
+
+struct LocalRobot {
+    std::string robotID;
+    std::string type;
+    std::string currentLocationID;
+    double batteryLevel;
+    double maxCapacity;
+    std::string status;
+    std::string assignedTaskID;
+    LocalRobot* next;
+
+    virtual double getBatteryRate() const = 0;
+    virtual bool isEligibleForOrder(double totalWeight, double maxUnitWeight) const = 0;
+    virtual ~LocalRobot() {}
+};
+
+struct LocalRobotFleet {
+    LocalRobot* head;
+    LocalRobotFleet() : head(nullptr) {}
+    virtual LocalRobot* searchRobot(const std::string& robotID) const = 0;
+    virtual void assignRobot(const std::string& robotID, const std::string& orderID) = 0;
+    virtual void releaseRobot(const std::string& robotID) = 0;
+    virtual ~LocalRobotFleet() {}
+};
+
+//extra per-trip info for execution & battery checks
+struct TripMetaNode {
+    int tripNumber;
+    double tripWeight;
+    double tripBattery;
+    bool isExecuted;
+    TripMetaNode* next;
+
+    TripMetaNode(int num, double w, double batt)
+        : tripNumber(num), tripWeight(w), tripBattery(batt), isExecuted(false), next(nullptr) {}
+};
+
+class PickingPlan {
+public:
+    std::string orderID;
+    std::string assignedRobotID;
+    PickingTripList trips;
+    TripMetaNode* metaHead;
+    TripMetaNode* metaTail;
+    int totalPlanDistance;
+    double totalEstimatedBattery;
+    bool isValid;
+
+    PickingPlan()
+        : orderID(""), assignedRobotID(""), metaHead(nullptr), metaTail(nullptr),
+          totalPlanDistance(0), totalEstimatedBattery(0.0), isValid(false) {}
+
+    ~PickingPlan();
+    void clear();
+};
+
+double calcLegBattery(int distance, double rate, double carriedWeight, double maxCapacity);
+
+bool buildOrderOrderedStops(
+    const OrderNode* order,
+    const std::string& startLocationID,
+    const LocalInventoryTree& inventory,
+    const LocalWarehouseGraph& graph,
+    OrderedStopList& orderedOut
+);
+
+bool buildRobotPickingPlan(
+    const LocalRobot* robot,
+    const OrderNode* order,
+    const LocalInventoryTree& inventory,
+    const LocalWarehouseGraph& graph,
+    PickingPlan& planOut
+);
+
+bool selectBestRobotAndGeneratePlan(
+    LocalOrderQueue& orderQueue,
+    LocalInventoryTree& inventory,
+    LocalRobotFleet& fleet,
+    const LocalWarehouseGraph& graph,
+    PickingPlan& finalPlanOut,
+    OrderNode*& selectedOrderOut
+);
+
+void displayPickingPlan(const PickingPlan& plan);
+
 #endif // PICKINGPLAN_H
