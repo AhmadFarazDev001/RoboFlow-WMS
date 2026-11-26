@@ -1,11 +1,9 @@
 #pragma once
 #include "LinkedList.h"
 
-// ~~~~ linkedList ~~~~
+LinkedList::LinkedList() : head(nullptr), tail(nullptr), count(0) {}
 
-inline LinkedList::LinkedList() : head(nullptr), tail(nullptr), count(0) {}
-
-inline LinkedList::LinkedList(const LinkedList &other) : head(nullptr), tail(nullptr), count(0)
+LinkedList::LinkedList(const LinkedList &other) : head(nullptr), tail(nullptr), count(0)
 {
     ListNode *curr = other.head;
     while (curr != nullptr)
@@ -15,7 +13,7 @@ inline LinkedList::LinkedList(const LinkedList &other) : head(nullptr), tail(nul
     }
 }
 
-inline LinkedList &LinkedList::operator=(const LinkedList &other)
+LinkedList &LinkedList::operator=(const LinkedList &other)
 {
     if (this != &other)
     {
@@ -30,12 +28,12 @@ inline LinkedList &LinkedList::operator=(const LinkedList &other)
     return *this;
 }
 
-inline LinkedList::~LinkedList()
+LinkedList::~LinkedList()
 {
     clear();
 }
 
-inline void LinkedList::clear()
+void LinkedList::clear()
 {
     ListNode *curr = head;
     while (curr != nullptr)
@@ -48,20 +46,20 @@ inline void LinkedList::clear()
     count = 0;
 }
 
-inline void LinkedList::insertFront(const std::string &val)
+void LinkedList::insertFront(const std::string &val)
 {
     ListNode *node = new ListNode(val);
     node->next = head;
     head = node;
-    if (!tail)
+    if (tail == nullptr)
         tail = head;
     count++;
 }
 
-inline void LinkedList::insertBack(const std::string &val)
+void LinkedList::insertBack(const std::string &val)
 {
     ListNode *node = new ListNode(val);
-    if (!head)
+    if (head == nullptr)
     {
         head = tail = node;
     }
@@ -73,9 +71,9 @@ inline void LinkedList::insertBack(const std::string &val)
     count++;
 }
 
-inline bool LinkedList::removeByValue(const std::string &val)
+bool LinkedList::removeByValue(const std::string &val)
 {
-    if (!head)
+    if (head == nullptr)
         return false;
 
     ListNode *curr = head;
@@ -102,7 +100,7 @@ inline bool LinkedList::removeByValue(const std::string &val)
     return false;
 }
 
-inline bool LinkedList::contains(const std::string &val) const
+bool LinkedList::contains(const std::string &val) const
 {
     ListNode *curr = head;
     while (curr != nullptr)
@@ -114,11 +112,11 @@ inline bool LinkedList::contains(const std::string &val) const
     return false;
 }
 
-// ~~~ PairList ~~~
+// PairList functions
 
-inline PairList::PairList() : head(nullptr) {}
+PairList::PairList() : head(nullptr) {}
 
-inline PairList::~PairList()
+PairList::~PairList()
 {
     PairNode *curr = head;
     while (curr != nullptr)
@@ -129,10 +127,10 @@ inline PairList::~PairList()
     }
 }
 
-inline void PairList::insertBack(const std::string &key, const std::string &value)
+void PairList::insertBack(const std::string &key, const std::string &value)
 {
     PairNode *node = new PairNode(key, value);
-    if (!head)
+    if (head == nullptr)
     {
         head = node;
         return;
@@ -143,7 +141,7 @@ inline void PairList::insertBack(const std::string &key, const std::string &valu
     curr->next = node;
 }
 
-inline bool PairList::exists(const std::string &key) const
+bool PairList::exists(const std::string &key) const
 {
     PairNode *curr = head;
     while (curr != nullptr)
@@ -155,7 +153,7 @@ inline bool PairList::exists(const std::string &key) const
     return false;
 }
 
-inline std::string PairList::getValue(const std::string &key) const
+std::string PairList::getValue(const std::string &key) const
 {
     PairNode *curr = head;
     while (curr != nullptr)
