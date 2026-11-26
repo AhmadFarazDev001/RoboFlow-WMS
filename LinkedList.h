@@ -9,7 +9,7 @@ struct ListNode
     ListNode(const std::string &val) : data(val), next(nullptr) {}
 };
 
-// Simple singly linked list for location paths and iDs
+// simple linked list for paths aur IDs
 class LinkedList
 {
 private:
@@ -43,7 +43,7 @@ struct PairNode
     PairNode(const std::string &k, const std::string &v) : key(k), value(v), next(nullptr) {}
 };
 
-// Linked list for keyvalue pairs {used for RackID -> Location id}
+// rackID ko locationID k sath map krny k liye
 class PairList
 {
 private:
