@@ -134,7 +134,7 @@ bool SinglyLinkedList<T>::removeByValue(const T &value)
     ListNode<T> *p = head;
     ListNode<T> *q = nullptr;
 
-    while (p && p->data != value)
+    while (p && !(p->data == value))
     {
         q = p;
         p = p->next;
@@ -269,6 +269,7 @@ ListNode<T> *SinglyLinkedList<T>::getHead() const
 {
     return head;
 }
+
 
 template <typename T>
 int SinglyLinkedList<T>::getSize() const

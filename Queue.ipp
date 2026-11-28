@@ -95,6 +95,17 @@ void Queue<T>::enqueue(const T &value)
 }
 
 template <typename T>
+void Queue<T>::enqueueFront(const T &value)
+{
+    QueueNode<T> *t = new QueueNode<T>(value);
+    t->next = frontNode;
+    frontNode = t;
+    if (!rearNode)
+        rearNode = t;
+    count++;
+}
+
+template <typename T>
 bool Queue<T>::dequeue()
 {
     if (isEmpty())
@@ -142,7 +153,7 @@ bool Queue<T>::removeByValue(const T &value)
     QueueNode<T> *p = frontNode;
     QueueNode<T> *q = nullptr;
 
-    while (p && p->data != value)
+    while (p && !(p->data == value))
     {
         q = p;
         p = p->next;

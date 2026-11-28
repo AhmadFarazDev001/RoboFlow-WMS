@@ -1,44 +1,45 @@
+// -- Written by Ahmad: Shared domain data structures for inventory, orders, and undo history
 #pragma once
 #include "library.h"
 
-// Module 2: Valid rack mapping loaded from racks.txt
-struct RackInfo
-{
+struct RackInfo {
     string rackID;
     string locationID;
 };
 
-// Module 2: Order reservation attached to a specific rack
-struct ReservationRecord
-{
+struct ReservationRecord {
     string orderID;
     int quantity = 0;
-    bool operator==(const ReservationRecord &r) const
+
+    // -- Compares two reservation records for equality
+    bool operator==(const ReservationRecord& r) const
     {
-        if (orderID == r.orderID && quantity == r.quantity)
-            return true;
+        if(orderID==r.orderID && quantity==r.quantity)
+        return true;
 
         return false;
     }
+
+    // -- Compares two reservation records for inequality
+    bool operator!=(const ReservationRecord& r) const
+    {
+        return !(*this == r);
+    }
 };
 
-// Module 2: Storage rack entry attached to a product
-struct RackEntry
-{
+struct RackEntry {
     string rackID;
     int totalQty = 0;
     int reservedQty = 0;
     SinglyLinkedList<ReservationRecord> reservations;
 
-    int getAvailableQty() const
-    {
+    // -- Calculates unreserved stock available on this rack
+    int getAvailableQty() const {
         return totalQty - reservedQty;
     }
 };
 
-// Module 2: Product record stored as value in AVLTree<string, Product>
-struct Product
-{
+struct Product {
     string productID;
     string name;
     double unitWeight = 0.0;
@@ -46,37 +47,31 @@ struct Product
     SinglyLinkedList<RackEntry> racks;
 };
 
-// Module 2 <-> Module 5: Returned when reserving stock across racks
-struct RackAllocation
-{
+struct RackAllocation {
     string rackID;
     string locationID;
     int quantity = 0;
 };
 
-// Module 3: Single line item inside a customer order
-struct OrderItem
-{
+struct OrderItem {
     string productID;
     int requiredQty = 0;
     int reservedQty = 0;
+    int deliveredQty = 0;
 };
 
-// Module 3: Customer order stored in master SinglyLinkedList<Order>
-struct Order
-{
+struct Order {
     string orderID;
     string customerID;
-    string status = "Pending"; // Pending, Reserved, Assigned, Completed, Cancelled
+    string status = "Pending";
+    string assignedRobotID;
     SinglyLinkedList<OrderItem> items;
 };
 
-// Module 8: Reversible admin action stored in Stack<UndoRecord>
-struct UndoRecord
-{
-    string actionType;  // "RACK_UPDATE", "BLOCK_PATHWAY", "ROBOT_MAINTENANCE"
-    string primaryID;   // productID, locationA, or robotID
-    string secondaryID; // rackID, locationB, or ""
+struct UndoRecord {
+    string actionType;
+    string primaryID;
+    string secondaryID;
     int oldIntVal = 0;
     int newIntVal = 0;
     string oldStrVal;

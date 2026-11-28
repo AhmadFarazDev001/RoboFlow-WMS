@@ -146,7 +146,7 @@ AVLNode<K, V> *AVLTree<K, V>::insertNode(AVLNode<K, V> *node, const K &key, cons
 
     int bf = getBalanceFactor(node);
 
-    // Left Heavy
+    // -- Left heavy
     if (bf > 1)
     {
         if (getBalanceFactor(node->left) >= 0)
@@ -159,7 +159,7 @@ AVLNode<K, V> *AVLTree<K, V>::insertNode(AVLNode<K, V> *node, const K &key, cons
             return rotateRight(node);
         }
     }
-    else if (bf < -1) // right heavy
+    else if (bf < -1) // -- Right heavy
     {
         if (getBalanceFactor(node->right) <= 0)
         {
@@ -225,7 +225,7 @@ AVLNode<K, V> *AVLTree<K, V>::removeNode(AVLNode<K, V> *node, const K &key, bool
 
         int bf = getBalanceFactor(node);
 
-        // Left Heavy
+        // -- Left heavy
         if (bf > 1)
         {
             if (getBalanceFactor(node->left) >= 0)
@@ -238,7 +238,7 @@ AVLNode<K, V> *AVLTree<K, V>::removeNode(AVLNode<K, V> *node, const K &key, bool
                 return rotateRight(node);
             }
         }
-        else if (bf < -1) // right heavy
+        else if (bf < -1) // -- Right heavy
         {
             if (getBalanceFactor(node->right) <= 0)
             {

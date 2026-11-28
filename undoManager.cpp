@@ -1,6 +1,6 @@
 #include "undoManager.h"
 
-bool UndoManager::isValidActionType(const std::string &actionType) const
+bool UndoManager::isValidActionType(const string &actionType) const
 {
     if (actionType != "RACK_UPDATE" && actionType != "BLOCK_PATHWAY" && actionType != "ROBOT_MAINTENANCE")
     {
@@ -126,6 +126,13 @@ bool UndoManager::undoLastAction(UndoRecord &outRevertedRecord)
     return true;
 }
 
+bool UndoManager::discardTopAction()
+{
+    if (!canUndo())
+        return false;
+    return historyStack.pop();
+}
+
 void UndoManager::clearHistory()
 {
     historyStack.clear();
@@ -135,14 +142,15 @@ void UndoManager::displayUndoHistory() const
 {
     if (historyStack.isEmpty())
     {
-        cout << "No Undo History!" << endl;
+        UI::printWarning("No reversible operations in undo history.");
         return;
     }
 
-    cout << "===== Undo History =====" << endl;
+    UI::printSectionBanner("UNDO HISTORY STACK (MOST RECENT FIRST)");
     Stack<UndoRecord> st;
     st = historyStack;
 
+    int entryNum = 1;
     while (!st.isEmpty())
     {
         UndoRecord *rec = st.top();
@@ -150,28 +158,28 @@ void UndoManager::displayUndoHistory() const
             break;
         if (rec->actionType == "RACK_UPDATE")
         {
-            cout << "Type: " << rec->actionType << endl;
-            cout << "Product ID: " << rec->primaryID << endl;
-            cout << "Rack ID: " << rec->secondaryID << endl;
-            cout << "New Quantity: " << rec->newIntVal << endl;
-            cout << "Old Quantity: " << rec->oldIntVal << endl;
+            UI::printRow(UI::accent() + "#" + to_string(entryNum) + " [" + rec->actionType + "] " + UI::reset() +
+                         "Product: " + UI::bold() + rec->primaryID + UI::reset() +
+                         " | Rack: " + rec->secondaryID +
+                         " | Old Qty: " + to_string(rec->oldIntVal) +
+                         " -> New Qty: " + to_string(rec->newIntVal));
         }
         else if (rec->actionType == "BLOCK_PATHWAY")
         {
-            cout << "Type: " << rec->actionType << endl;
-            cout << "From Location: " << rec->primaryID << endl;
-            cout << "To Location: " << rec->secondaryID << endl;
-            cout << "Was Blocked: " << ((rec->oldIntVal) ? "Yes" : "No") << endl;
-            cout << "Is Blocked: " << ((rec->newIntVal) ? "Yes" : "No") << endl;
+            UI::printRow(UI::accent() + "#" + to_string(entryNum) + " [" + rec->actionType + "] " + UI::reset() +
+                         "Pathway: " + UI::bold() + rec->primaryID + " <-> " + rec->secondaryID + UI::reset() +
+                         " | Previous: " + ((rec->oldIntVal) ? "BLOCKED" : "OPEN") +
+                         " -> Current: " + ((rec->newIntVal) ? "BLOCKED" : "OPEN"));
         }
         else
         {
-            cout << "Type: " << rec->actionType << endl;
-            cout << "Robot ID: " << rec->primaryID << endl;
-            cout << "Old Status: " << rec->oldStrVal << endl;
-            cout << "New Status: " << rec->newStrVal << endl;
+            UI::printRow(UI::accent() + "#" + to_string(entryNum) + " [" + rec->actionType + "] " + UI::reset() +
+                         "Robot: " + UI::bold() + rec->primaryID + UI::reset() +
+                         " | Old Status: " + rec->oldStrVal +
+                         " -> New Status: " + rec->newStrVal);
         }
-        cout << endl;
+        entryNum++;
         st.pop();
     }
+    UI::drawDecoration('_', '=', '_');
 }

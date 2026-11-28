@@ -22,7 +22,7 @@ string ProductAVL::getRackLocation(const string &rackID) const
 
 bool ProductAVL::addProduct(const string &productID, const string &name, double unitWeight, int reorderLevel)
 {
-    if (unitWeight <= 0 || reorderLevel < 0)
+    if (productID.empty() || name.empty() || unitWeight <= 0 || reorderLevel < 0)
         return false;
 
     Product p;
@@ -107,7 +107,7 @@ bool ProductAVL::updateRackQuantity(const string &productID, const string &rackI
     if (!r)
         return false;
 
-    if (newTotalQty < r->reservedQty)
+    if (newTotalQty < 0 || newTotalQty < r->reservedQty)
         return false;
 
     if (outOldQty)
@@ -135,6 +135,28 @@ bool ProductAVL::removeEmptyRackFromProduct(const string &productID, const strin
 
     return p->racks.removeIf([&](const RackEntry &valR)
                              { return valR.rackID == rackID; });
+}
+
+int ProductAVL::getReservedStockForOrder(const string &orderID, const string &productID) const
+{
+    if (orderID.empty() || productID.empty())
+        return 0;
+
+    const Product *p = catalog.search(productID);
+    if (!p)
+        return 0;
+
+    int totalRes = 0;
+    const ListNode<RackEntry> *r = p->racks.getHead();
+    while (r)
+    {
+        const ReservationRecord *rec = r->data.reservations.findIf([&](const ReservationRecord &rr)
+                                                                   { return rr.orderID == orderID; });
+        if (rec)
+            totalRes += rec->quantity;
+        r = r->next;
+    }
+    return totalRes;
 }
 
 int ProductAVL::getTotalStock(const string &productID) const
@@ -253,12 +275,108 @@ bool ProductAVL::reserveStock(const string &orderID, const string &productID, in
         return false;
 }
 
+bool ProductAVL::reserveRackStock(const string &orderID, const string &productID, const string &rackID, int qty)
+{
+    if (orderID.empty() || productID.empty() || rackID.empty() || qty <= 0)
+        return false;
+
+    Product *p = catalog.search(productID);
+    if (!p)
+        return false;
+
+    RackEntry *r = p->racks.findIf([&](const RackEntry &entry)
+                                   { return entry.rackID == rackID; });
+    if (!r || r->getAvailableQty() < qty)
+        return false;
+
+    r->reservedQty += qty;
+    ReservationRecord *resR = r->reservations.findIf([&](const ReservationRecord &rec)
+                                                     { return rec.orderID == orderID; });
+    if (!resR)
+    {
+        ReservationRecord newRec;
+        newRec.orderID = orderID;
+        newRec.quantity = qty;
+        r->reservations.insertBack(newRec);
+    }
+    else
+    {
+        resR->quantity += qty;
+    }
+    return true;
+}
+
+bool ProductAVL::releaseSingleStopReservation(const string &orderID, const string &productID, const string &rackID, int qty)
+{
+    if (orderID.empty() || productID.empty() || rackID.empty() || qty <= 0)
+        return false;
+
+    Product *p = catalog.search(productID);
+    if (!p)
+        return false;
+
+    RackEntry *r = p->racks.findIf([&](const RackEntry &entry)
+                                   { return entry.rackID == rackID; });
+    if (!r)
+        return false;
+
+    ReservationRecord *resR = r->reservations.findIf([&](const ReservationRecord &rec)
+                                                     { return rec.orderID == orderID; });
+    if (!resR)
+        return false;
+
+    int releaseAmt = (qty < resR->quantity) ? qty : resR->quantity;
+    resR->quantity -= releaseAmt;
+    r->reservedQty -= releaseAmt;
+    if (r->reservedQty < 0)
+        r->reservedQty = 0;
+
+    if (resR->quantity <= 0)
+    {
+        r->reservations.removeIf([&](const ReservationRecord &rec)
+                                 { return rec.orderID == orderID && rec.quantity <= 0; });
+    }
+    return true;
+}
+
+bool ProductAVL::commitPickedStock(const string &orderID, const string &productID, const string &rackID, int qty)
+{
+    if (orderID.empty() || productID.empty() || rackID.empty() || qty <= 0)
+        return false;
+
+    Product *p = catalog.search(productID);
+    if (!p)
+        return false;
+
+    RackEntry *r = p->racks.findIf([&](const RackEntry &entry)
+                                   { return entry.rackID == rackID; });
+    if (!r || r->totalQty < qty || r->reservedQty < qty)
+        return false;
+
+    ReservationRecord *resR = r->reservations.findIf([&](const ReservationRecord &rec)
+                                                     { return rec.orderID == orderID; });
+    if (!resR || resR->quantity < qty)
+        return false;
+
+    resR->quantity -= qty;
+    r->reservedQty -= qty;
+    r->totalQty -= qty;
+
+    if (resR->quantity <= 0)
+    {
+        r->reservations.removeIf([&](const ReservationRecord &rec)
+                                 { return rec.orderID == orderID && rec.quantity <= 0; });
+    }
+    return true;
+}
+
 void ProductAVL::releaseOrderReservations(const string &orderID)
 {
     if (orderID.empty())
         return;
     catalog.traverseInOrder([&](string &id, Product &p)
                             {
+                                (void)id;
                                 ListNode<RackEntry> *r = p.racks.getHead();
                                 while (r)
                                 {
@@ -286,6 +404,7 @@ void ProductAVL::commitOrderPick(const string &orderID)
         return;
     catalog.traverseInOrder([&](string &id, Product &p)
                             {
+                                (void)id;
                                 ListNode<RackEntry> *r = p.racks.getHead();
                                 while (r)
                                 {
@@ -313,67 +432,83 @@ void ProductAVL::displayAllProducts() const
 {
     if (catalog.isEmpty())
     {
-        cout << "Empty Catalog!" << endl;
+        UI::printWarning("Product catalog is currently empty.");
         return;
     }
 
-    cout << "===== All Products ======" << endl;
+    UI::printSectionBanner("PRODUCT CATALOG (AVL IN-ORDER)");
     catalog.traverseInOrder([&](const string &id, const Product &p)
                             {
-        cout << endl << "Product Id: " << id << endl;
-        cout << "Product Name: " << p.name << endl; });
+        ostringstream wStr;
+        wStr << fixed << setprecision(2) << p.unitWeight;
+        UI::printRow(UI::accent() + id + UI::reset() +
+                     " | " + UI::bold() + p.name + UI::reset() +
+                     " | Weight: " + wStr.str() + " kg" +
+                     " | Reorder Level: " + to_string(p.reorderLevel) +
+                     " | Avail: " + to_string(getAvailableStock(id))); });
+    UI::drawDecoration('_', '=', '_');
 }
 
 void ProductAVL::displayProductDetails(const string &productID) const
 {
     if (productID.empty())
     {
-        cout << "Invalid Product Id!" << endl;
+        UI::printError("Product ID cannot be empty.");
         return;
     }
 
     const Product *p = catalog.search(productID);
     if (!p)
     {
-        cout << "Product does not exist!" << endl;
+        UI::printError("Product " + productID + " does not exist in catalog.");
         return;
     }
 
-    cout << "===== Product: " << productID << " Information =====" << endl;
-    cout << "Product ID: " << p->productID << endl;
-    cout << "Product Name: " << p->name << endl;
-    cout << "Unit Weight: " << p->unitWeight << endl;
-    cout << "Reorder Level: " << p->reorderLevel << endl;
+    ostringstream wStr;
+    wStr << fixed << setprecision(2) << p->unitWeight;
+
+    UI::printSectionBanner("PRODUCT DETAILS : " + p->productID);
+    UI::printRow("Product Name  : " + UI::bold() + p->name + UI::reset());
+    UI::printRow("Unit Weight   : " + wStr.str() + " kg");
+    UI::printRow("Reorder Level : " + to_string(p->reorderLevel) + " units");
 
     ListNode<RackEntry> *r = p->racks.getHead();
     if (!r)
     {
-        cout << "No Rack Allocated!" << endl;
+        UI::drawDecoration('+', '-', '+');
+        UI::printRow(UI::warnColor() + "No storage racks currently hold this product." + UI::reset());
+        UI::drawDecoration('_', '=', '_');
         return;
     }
-    cout << "===== Rack Allocation Information =====" << endl;
+
+    UI::drawDecoration('+', '-', '+');
+    UI::printCentered(UI::infoColor() + "STORAGE RACK BREAKDOWN" + UI::reset(), '|');
+    UI::drawDecoration('|', '-', '|');
 
     while (r)
     {
-        cout << "\nRack ID: " << r->data.rackID << endl;
-        cout << "Rack Location: " << getRackLocation(r->data.rackID) << endl;
-        cout << "Total Quantity: " << r->data.totalQty << endl;
-        cout << "Reserved Quantity: " << r->data.reservedQty << endl;
-        cout << "Available Quantity: " << r->data.getAvailableQty() << endl;
+        UI::printRow(UI::accent() + r->data.rackID + UI::reset() +
+                     " (Loc: " + getRackLocation(r->data.rackID) + ")" +
+                     " | Total: " + to_string(r->data.totalQty) +
+                     " | Reserved: " + to_string(r->data.reservedQty) +
+                     " | Available: " + (r->data.getAvailableQty() > 0 ? UI::okColor() : UI::errColor()) +
+                     to_string(r->data.getAvailableQty()) + UI::reset());
         r = r->next;
     }
+    UI::drawDecoration('_', '=', '_');
 }
 
 void ProductAVL::displayLowStockAlerts() const
 {
     if (catalog.isEmpty())
     {
-        cout << "Empty Catalog!" << endl;
+        UI::printWarning("Product catalog is currently empty.");
         return;
     }
     bool anyAlert = false;
     catalog.traverseInOrder([&](const string &id, const Product &p)
                             {
+         (void)id;
          int thresh = p.reorderLevel;
          int totalQuant = 0;
          ListNode<RackEntry>*r=p.racks.getHead();
@@ -383,16 +518,17 @@ void ProductAVL::displayLowStockAlerts() const
             r=r->next;
          }
 
-         if(totalQuant <= thresh)
+         if(totalQuant < thresh)
          {
             anyAlert=true;
-            cout << "=== Low Stock " << p.productID << " alert ===" << endl;
+            UI::printWarning("Low Stock Alert for " + p.productID + " (" + p.name + "): Available " +
+                             to_string(totalQuant) + " < Reorder Level " + to_string(thresh));
             displayProductDetails(p.productID);
          } });
 
     if (!anyAlert)
     {
-        cout << "No Low Stock Alert!" << endl;
+        UI::printSuccess("All products meet or exceed their reorder thresholds.");
     }
 }
 
@@ -410,15 +546,23 @@ bool ProductAVL::loadRacks(const string &filename)
     }
 
     int total = 0;
-    fin >> total;
+    if (!(fin >> total))
+    {
+        fin.close();
+        return false;
+    }
     for (int i = 0; i < total; i++)
     {
         string rackId, rackLoc;
-        fin >> rackId >> rackLoc;
-        RackInfo rack;
-        rack.rackID = rackId;
-        rack.locationID = rackLoc;
-        validRacks.insertBack(rack);
+        if (!(fin >> rackId >> rackLoc))
+            break;
+        if (!rackId.empty() && !rackLoc.empty() && !isValidRack(rackId))
+        {
+            RackInfo rack;
+            rack.rackID = rackId;
+            rack.locationID = rackLoc;
+            validRacks.insertBack(rack);
+        }
     }
 
     fin.close();
@@ -439,14 +583,19 @@ bool ProductAVL::loadProducts(const string &filename)
     }
 
     int total = 0;
-    fin >> total;
+    if (!(fin >> total))
+    {
+        fin.close();
+        return false;
+    }
     for (int i = 0; i < total; i++)
     {
         string id, name;
         double weight;
         int level;
 
-        fin >> id >> name >> weight >> level;
+        if (!(fin >> id >> name >> weight >> level))
+            break;
         addProduct(id, name, weight, level);
     }
 
@@ -468,13 +617,18 @@ bool ProductAVL::loadInventory(const string &filename)
     }
 
     int total = 0;
-    fin >> total;
+    if (!(fin >> total))
+    {
+        fin.close();
+        return false;
+    }
     for (int i = 0; i < total; i++)
     {
         string pId, rId;
         int qty;
 
-        fin >> pId >> rId >> qty;
+        if (!(fin >> pId >> rId >> qty))
+            break;
         addRackToProduct(pId, rId, qty);
     }
 
